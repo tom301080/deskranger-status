@@ -1,0 +1,26 @@
+{
+  "updated": "2026-10-02T13:31:43Z",
+  "checks": {
+    "observatory": {
+      "passed": true,
+      "checked": "2026-10-02T13:31:43Z",
+      "detail": "A+ (145/100)",
+      "last_passed": "2026-10-02T13:31:43Z",
+      "last_detail": "A+ (145/100)"
+    },
+    "tls": {
+      "passed": true,
+      "checked": "2026-10-02T13:31:43Z",
+      "detail": "A+",
+      "last_passed": "2026-10-02T13:31:43Z",
+      "last_detail": "A+"
+    },
+    "security_txt": {
+      "passed": true,
+      "checked": "2026-10-02T13:31:43Z",
+      "detail": "",
+      "last_passed": "2026-10-02T13:31:43Z",
+      "last_detail": ""
+    }
+  }
+}
