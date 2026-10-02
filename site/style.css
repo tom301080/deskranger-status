@@ -99,3 +99,20 @@ a:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-ra
   .component { padding: 16px; }
   .banner { padding: 18px; }
 }
+
+/* Security checks (security.py) */
+.page-title { font-size: clamp(26px, 5vw, 34px); margin: 34px 0 8px; }
+.lead { color: var(--muted); margin: 0 0 26px; max-width: 640px; }
+.checks { margin-bottom: 28px; }
+.checks h2 { font-size: 18px; margin: 0 0 12px; }
+.checks ul { list-style: none; margin: 0; padding: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.checks li { display: flex; justify-content: space-between; gap: 20px; padding: 18px 22px; }
+.checks li + li { border-top: 1px solid var(--line); }
+.checks h3 { font-size: 16px; margin-bottom: 4px; }
+.checks p { margin: 0; font-size: 14px; color: var(--muted); }
+.check-status { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; text-align: right; }
+.check-state { font-size: 13px; font-weight: 650; display: inline-flex; align-items: center; gap: 7px; color: var(--muted); }
+.check-state.ok { color: var(--ok-ink); }
+.check-state.ok::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--ok); }
+.check-when { font-size: 12px; color: var(--muted); }
+@media (max-width: 600px) { .checks li { flex-direction: column; gap: 10px; } .check-status { align-items: flex-start; text-align: left; } }

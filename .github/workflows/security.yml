@@ -1,0 +1,50 @@
+# Weekly: our own security checks of the website (status/security.py, DeskRanger ADR 0046).
+# Results go to the `security-data` branch (web.json); the private DeskRanger repository writes
+# code.json there. Then the page is published (/security/). Runs at GitHub, outside our hosting.
+name: security
+on:
+  schedule:
+    - cron: "10 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      REMOTE: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Results so far
+        run: |
+          git clone -q --branch security-data "$REMOTE" security-data || { mkdir -p security-data && git -C security-data init -q -b security-data; }
+      - name: testssl.sh 3.2.4
+        run: git clone -q --depth 1 --branch v3.2.4 https://github.com/testssl/testssl.sh.git testssl
+      - name: Check the website
+        run: python3 status/security.py --data security-data --testssl testssl/testssl.sh
+      - name: Save the results
+        working-directory: security-data
+        run: |
+          git add web.json
+          git -c user.name="deskranger-status" -c user.email="deskranger-status@users.noreply.github.com" commit -q -m "Website checks $(date -u +%Y-%m-%dT%H:%MZ)" || exit 0
+          # The private repository may have written code.json in the meantime.
+          for attempt in 1 2 3; do
+            git push -q "$REMOTE" HEAD:security-data && exit 0
+            git pull -q --rebase "$REMOTE" security-data
+          done
+          exit 1
+
+  publish:
+    needs: check
+    uses: ./.github/workflows/publish.yml
+    permissions:
+      pages: write
+      id-token: write
+      contents: read

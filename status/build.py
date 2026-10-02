@@ -6,7 +6,9 @@ Output (German at /, English at /en/):
   status.json                 current state and 90-day uptime per component
   style.css, app.js, brand.svg, favicon.svg
 
-Usage: python3 status/build.py --services services.toml --data <dir> --out _site
+  security/index.html, en/security/index.html   our own security checks (security.py), with --security
+
+Usage: python3 status/build.py --services services.toml --data <dir> --out _site [--security <dir>]
 Standard library only.
 """
 from __future__ import annotations
@@ -20,6 +22,8 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
+
+import security
 
 ROOT = Path(__file__).resolve().parent.parent
 BERLIN = ZoneInfo("Europe/Berlin")
@@ -44,7 +48,7 @@ TEXT = {
         "monitoring": "Wird beobachtet", "resolved": "Behoben", "scheduled": "Geplant",
         "how_title": "So messen wir",
         "how": "Etwa alle fünf Minuten ruft ein Prüfauftrag bei GitHub (außerhalb unseres Hostings) jeden Dienst auf. Antwortet ein Dienst nicht oder falsch, versucht er es nach fünf Sekunden noch einmal; erst dann zählt die Prüfung als gestört. Antworten über {ms} ms zählen als langsam. Die Daten und der Code dieser Seite sind öffentlich.",
-        "feed": "Meldungen als Feed", "source": "Daten und Code", "other": "English",
+        "feed": "Meldungen als Feed", "source": "Daten und Code", "other": "English", "security": "Sicherheit",
         "fmt_day": "%d.%m.%Y", "fmt_time": "%d.%m.%Y, %H:%M Uhr",
     },
     "en": {
@@ -63,7 +67,7 @@ TEXT = {
         "monitoring": "Monitoring", "resolved": "Resolved", "scheduled": "Scheduled",
         "how_title": "How we measure",
         "how": "About every five minutes a job at GitHub (outside our hosting) calls every service. If a service does not answer or answers wrongly, it tries again after five seconds; only then the check counts as disrupted. Answers slower than {ms} ms count as slow. The data and the code of this page are public.",
-        "feed": "Notices as a feed", "source": "Data and code", "other": "Deutsch",
+        "feed": "Notices as a feed", "source": "Data and code", "other": "Deutsch", "security": "Security",
         "fmt_day": "%Y-%m-%d", "fmt_time": "%Y-%m-%d %H:%M %Z",
     },
 }
@@ -259,7 +263,7 @@ def render_page(config: dict, current: dict, daily: dict, incidents: list[Incide
 <header class="top">
   <div class="wrap top-row">
     <a class="brand" href="https://www.deskranger.app/{lang}/"><img src="{prefix}brand.svg" alt="" width="28" height="28">DeskRanger <span>Status</span></a>
-    <nav><a href="https://www.deskranger.app/{lang}/">{t['website']}</a><a href="{other_href}" hreflang="{'en' if lang == 'de' else 'de'}">{t['other']}</a></nav>
+    <nav><a href="security/">{t['security']}</a><a href="https://www.deskranger.app/{lang}/">{t['website']}</a><a href="{other_href}" hreflang="{'en' if lang == 'de' else 'de'}">{t['other']}</a></nav>
   </div>
 </header>
 <main class="wrap" data-raw="{esc(RAW.format(repo=repo))}" data-labels="{esc(json.dumps(labels))}" data-floor="{incident_floor}" data-lang="{lang}">
@@ -309,7 +313,7 @@ def render_feed(config: dict, incidents: list[Incident]) -> str:
 """
 
 
-def build(services: Path, data_dir: Path, out: Path, today: date | None = None) -> None:
+def build(services: Path, data_dir: Path, out: Path, today: date | None = None, security_dir: Path | None = None) -> None:
     config = tomllib.loads(services.read_text())
     current = json.loads((data_dir / "current.json").read_text()) if (data_dir / "current.json").exists() else {}
     daily = json.loads((data_dir / "daily.json").read_text()) if (data_dir / "daily.json").exists() else {}
@@ -326,6 +330,14 @@ def build(services: Path, data_dir: Path, out: Path, today: date | None = None) 
     (out / "index.html").write_text(render_page(config, current, daily, incidents, "de", today, ""))
     (out / "en" / "index.html").write_text(render_page(config, current, daily, incidents, "en", today, "../"))
     (out / "feed.xml").write_text(render_feed(config, incidents))
+    def read(name: str) -> dict:
+        path = security_dir / name if security_dir else None
+        return json.loads(path.read_text()) if path and path.exists() else {}
+    web, code = read("web.json"), read("code.json")
+    (out / "security").mkdir()
+    (out / "en" / "security").mkdir()
+    (out / "security" / "index.html").write_text(security.render(web, code, "de", "../", "../en/security/"))
+    (out / "en" / "security" / "index.html").write_text(security.render(web, code, "en", "../../", "../../security/"))
     summary = {
         "checked_at": current.get("checked_at"),
         "status": overall(current, incidents) if current else "unknown",
@@ -345,8 +357,9 @@ def main(argv=None) -> int:
     parser.add_argument("--services", default="services.toml")
     parser.add_argument("--data", required=True)
     parser.add_argument("--out", default="_site")
+    parser.add_argument("--security", help="checkout of the security-data branch (web.json, code.json)")
     args = parser.parse_args(argv)
-    build(Path(args.services), Path(args.data), Path(args.out))
+    build(Path(args.services), Path(args.data), Path(args.out), security_dir=Path(args.security) if args.security else None)
     print(f"built {args.out}")
     return 0
 
