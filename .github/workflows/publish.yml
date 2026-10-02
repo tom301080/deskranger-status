@@ -1,0 +1,44 @@
+# Builds the page from main and the `data` branch and publishes it on GitHub
+# Pages. Called by `probe` and run on every push to main (incidents, texts, code).
+name: publish
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s status -v
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Latest data
+        run: git clone -q --depth 1 --branch data "https://github.com/${{ github.repository }}.git" data-branch || mkdir -p data-branch
+      - run: python3 status/build.py --services services.toml --data data-branch --out _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

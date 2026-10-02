@@ -1,0 +1,50 @@
+# Every ~5 minutes: check every service, keep the data on the `data` branch
+# (one orphan commit, no history), and publish the page when a status changed
+# or the last publish is an hour old. Runs at GitHub, outside the hosting it watches.
+name: probe
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    outputs:
+      deploy: ${{ steps.probe.outputs.deploy }}
+    env:
+      REMOTE: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+    steps:
+      - uses: actions/checkout@v4
+      - name: Data so far
+        run: |
+          git clone -q --depth 1 --branch data "$REMOTE" data-branch || { mkdir -p data-branch && git -C data-branch init -q -b data; }
+      - name: Check every service
+        id: probe
+        run: |
+          python3 status/probe.py --services services.toml --data data-branch | tee probe.log
+          grep -E '^(changed|deploy)=' probe.log >> "$GITHUB_OUTPUT"
+      - name: Save the data
+        working-directory: data-branch
+        run: |
+          git checkout -q --orphan next
+          git add -A
+          git -c user.name="deskranger-status" -c user.email="deskranger-status@users.noreply.github.com" commit -q -m "Status $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q -f "$REMOTE" next:data
+
+  publish:
+    needs: probe
+    if: needs.probe.outputs.deploy == 'true'
+    uses: ./.github/workflows/publish.yml
+    permissions:
+      pages: write
+      id-token: write
+      contents: read

@@ -1,0 +1,101 @@
+/* DeskRanger Status — the website's palette (www.deskranger.app), light and dark by system setting. */
+:root {
+  color-scheme: light;
+  --bg: #f5f8fd; --panel: #ffffff; --ink: #14243c; --muted: #5b6a82; --line: #e2e9f3; --link: #1264ed;
+  --ok: #17a673; --ok-soft: #e3f6ee; --ok-ink: #0f7a55;
+  --minor: #e8a33a; --minor-soft: #fff1da; --minor-ink: #9a5800;
+  --major: #d9434f; --major-soft: #fde8ea; --major-ink: #b02a36;
+  --maint: #5b7cf0; --maint-soft: #e9efff; --maint-ink: #2f4fc4;
+  --none: #dfe5ee; --shadow: 0 18px 50px #15355e14;
+  --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #091321; --panel: #0f1d30; --ink: #edf3fd; --muted: #a5b5cd; --line: #263951; --link: #83b3ff;
+    --ok: #3cc38f; --ok-soft: #0f3226; --ok-ink: #63d4a4;
+    --minor: #e8a33a; --minor-soft: #382811; --minor-ink: #f2b75b;
+    --major: #ef5b67; --major-soft: #3a1418; --major-ink: #ff8a93;
+    --maint: #7d98ff; --maint-soft: #16234a; --maint-ink: #a9bbff;
+    --none: #22324a; --shadow: 0 18px 50px #0006;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.55; padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0); }
+a { color: var(--link); }
+h1, h2, h3 { margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+p { margin: 0; }
+.wrap { width: min(880px, 100% - 32px); margin: 0 auto; }
+.muted { color: var(--muted); }
+
+.top { border-bottom: 1px solid var(--line); background: var(--panel); }
+.top-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 19px; letter-spacing: -0.03em; color: var(--ink); text-decoration: none; }
+.brand span { color: var(--muted); font-weight: 600; }
+.top nav { display: flex; gap: 18px; font-size: 14px; font-weight: 550; }
+.top nav a { color: var(--ink); text-decoration: none; }
+.top nav a:hover, .top nav a:focus-visible { color: var(--link); }
+
+main { display: grid; gap: 22px; padding: 32px 0 64px; }
+.banner { display: flex; align-items: center; gap: 16px; padding: 22px 24px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.banner h1 { font-size: clamp(22px, 4vw, 28px); }
+.banner p { color: var(--muted); font-size: 14px; margin-top: 2px; }
+.banner .dot { width: 18px; height: 18px; border-radius: 50%; flex: none; background: var(--none); box-shadow: 0 0 0 6px color-mix(in srgb, var(--none) 35%, transparent); }
+.banner.up .dot { background: var(--ok); box-shadow: 0 0 0 6px var(--ok-soft); }
+.banner.degraded .dot { background: var(--minor); box-shadow: 0 0 0 6px var(--minor-soft); }
+.banner.down .dot { background: var(--major); box-shadow: 0 0 0 6px var(--major-soft); }
+.banner.maintenance .dot { background: var(--maint); box-shadow: 0 0 0 6px var(--maint-soft); }
+
+.note { font-size: 14px; color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; padding: 12px 16px; }
+
+.components { list-style: none; margin: 0; padding: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.component { padding: 18px 22px 16px; display: grid; gap: 8px; }
+.component + .component { border-top: 1px solid var(--line); }
+.component-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.component-name { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.component h3 { font-size: 17px; font-weight: 650; }
+.component-text { font-size: 14px; color: var(--muted); }
+.stage { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--maint-ink); background: var(--maint-soft); border-radius: 6px; padding: 2px 7px; }
+.state { font-size: 13px; font-weight: 650; display: inline-flex; align-items: center; gap: 7px; color: var(--muted); }
+.state::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--none); }
+.state.up { color: var(--ok-ink); } .state.up::before { background: var(--ok); }
+.state.degraded { color: var(--minor-ink); } .state.degraded::before { background: var(--minor); }
+.state.down { color: var(--major-ink); } .state.down::before { background: var(--major); }
+
+.bars { display: flex; gap: 2px; height: 34px; margin-top: 4px; }
+.bars i { flex: 1 1 0; min-width: 2px; border-radius: 3px; background: var(--none); }
+.bars i.ok { background: var(--ok); }
+.bars i.minor { background: var(--minor); }
+.bars i.major { background: var(--major); }
+.bars i:hover { opacity: 0.75; }
+.bars-legend { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.since { font-size: 13px; margin-top: -10px; }
+
+.incidents { display: grid; gap: 12px; }
+.incidents h2, .how h2 { font-size: 20px; }
+.incident { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 20px; display: grid; gap: 6px; }
+.incidents.active .incident { border-color: var(--minor); }
+.incident-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.incident h3 { font-size: 16px; }
+.incident-meta { font-size: 13px; color: var(--muted); }
+.tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 6px; padding: 2px 7px; }
+.tag.minor { color: var(--minor-ink); background: var(--minor-soft); }
+.tag.major { color: var(--major-ink); background: var(--major-soft); }
+.tag.maintenance { color: var(--maint-ink); background: var(--maint-soft); }
+.tag.auto { color: var(--muted); background: var(--bg); border: 1px solid var(--line); }
+.updates { list-style: none; margin: 4px 0 0; padding: 0 0 0 14px; border-left: 2px solid var(--line); display: grid; gap: 10px; font-size: 14px; }
+.updates time { color: var(--muted); font-size: 13px; }
+.updates p { margin-top: 2px; }
+
+.how { display: grid; gap: 8px; font-size: 14px; color: var(--muted); }
+.how h2 { color: var(--ink); }
+.links { display: flex; flex-wrap: wrap; gap: 16px; }
+
+a:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 4px; }
+
+@media (max-width: 640px) {
+  .bars i:nth-child(-n+60) { display: none; }
+  .component { padding: 16px; }
+  .banner { padding: 18px; }
+}

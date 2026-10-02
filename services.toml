@@ -1,0 +1,87 @@
+# What status.deskranger.app watches. Every component has one or more HTTP
+# checks; its status is the worst of them. `stage = "test"` marks services
+# that run as the test environment for the apps' preview builds (operator
+# decision 2026-10-02: public now, production services join at launch).
+
+[site]
+title = "DeskRanger Status"
+url = "https://status.deskranger.app"
+repo = "tom301080/deskranger-status"
+# A check that answers but takes longer than this counts as degraded.
+degraded_ms = 3000
+# Days shown in the uptime bars and kept in the data.
+days = 90
+
+[[component]]
+id = "website"
+name = "Website"
+name_en = "Website"
+description = "www.deskranger.app: Produkt, Download, Preise und Hilfe."
+description_en = "www.deskranger.app: product, downloads, pricing and help."
+
+[[component.check]]
+id = "www"
+url = "https://www.deskranger.app/"
+expect_status = [200]
+expect_text = "DeskRanger"
+
+[[component.check]]
+id = "apex"
+# deskranger.app without "www" is forwarded by the domain registrar.
+url = "https://deskranger.app/"
+expect_status = [301, 302, 307, 308]
+
+[[component]]
+id = "console"
+name = "Web-Konsole"
+name_en = "Web console"
+description = "Geräte verwalten und im Browser verbinden."
+description_en = "Manage devices and connect in the browser."
+stage = "test"
+
+[[component.check]]
+id = "health"
+url = "https://staging-app.deskranger.app/health"
+expect_status = [200]
+expect_text = "ok"
+
+[[component]]
+id = "account"
+name = "Konto und Anmeldung"
+name_en = "Account and sign-in"
+description = "Konto erstellen, anmelden, Apple und Google."
+description_en = "Create an account, sign in, Apple and Google."
+stage = "test"
+
+[[component.check]]
+id = "health"
+url = "https://staging-account.deskranger.app/health"
+expect_status = [200]
+expect_text = "\"ok\":true"
+
+[[component]]
+id = "coord"
+name = "Verbindungsaufbau"
+name_en = "Connection service"
+description = "Geräteliste, Freigaben und der Aufbau jeder Sitzung."
+description_en = "Device list, permissions and setting up every session."
+stage = "test"
+
+[[component.check]]
+id = "meta"
+url = "https://staging-api.deskranger.app/v1/meta"
+expect_status = [200]
+expect_text = "\"api_version\""
+
+[[component]]
+id = "relay-eu"
+name = "Relay Europa"
+name_en = "Relay Europe"
+description = "Leitet verschlüsselte Sitzungen weiter, wenn kein direkter Weg möglich ist."
+description_en = "Forwards encrypted sessions when no direct path is possible."
+stage = "test"
+
+[[component.check]]
+id = "healthz"
+url = "https://staging-relay-eu.deskranger.app/healthz"
+expect_status = [200]

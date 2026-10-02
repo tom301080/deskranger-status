@@ -1,0 +1,19 @@
+# Copy to incidents/YYYY-MM-DD-short-name.toml and push to main; the page
+# updates within a minute or two. Add an [[update]] for every new step and one
+# with status = "resolved" at the end. Times in Berlin time.
+title = "Verbindungen über das Relay langsam"
+title_en = "Connections through the relay slow"
+impact = "minor"            # minor | major | maintenance
+components = ["relay-eu"]   # ids from services.toml
+
+[[update]]
+at = 2026-10-02T14:05:00+02:00
+status = "investigating"    # scheduled | investigating | identified | monitoring | resolved
+text = "Wir sehen längere Antwortzeiten am Relay in Europa und prüfen die Ursache."
+text_en = "We see longer response times at the relay in Europe and are looking into it."
+
+[[update]]
+at = 2026-10-02T14:40:00+02:00
+status = "resolved"
+text = "Das Relay läuft wieder normal."
+text_en = "The relay is back to normal."
