@@ -1,30 +1,30 @@
 {
-  "updated": "2026-10-06T14:32:03Z",
+  "updated": "2026-10-06T14:56:37Z",
   "checks": {
     "rust_deps": {
       "passed": true,
-      "checked": "2026-10-06T14:32:03Z",
-      "last_passed": "2026-10-06T14:32:03Z"
+      "checked": "2026-10-06T14:56:37Z",
+      "last_passed": "2026-10-06T14:56:37Z"
     },
     "npm_deps": {
       "passed": true,
-      "checked": "2026-10-06T14:32:03Z",
-      "last_passed": "2026-10-06T14:32:03Z"
+      "checked": "2026-10-06T14:56:37Z",
+      "last_passed": "2026-10-06T14:56:37Z"
     },
     "secrets": {
-      "passed": true,
-      "checked": "2026-10-06T14:32:03Z",
+      "passed": false,
+      "checked": "2026-10-06T14:56:37Z",
       "last_passed": "2026-10-06T14:32:03Z"
     },
     "code_analysis": {
       "passed": true,
-      "checked": "2026-10-06T14:32:03Z",
-      "last_passed": "2026-10-06T14:32:03Z"
+      "checked": "2026-10-06T14:56:37Z",
+      "last_passed": "2026-10-06T14:56:37Z"
     },
     "containers": {
       "passed": true,
-      "checked": "2026-10-06T14:32:03Z",
-      "last_passed": "2026-10-06T14:32:03Z"
+      "checked": "2026-10-06T14:56:37Z",
+      "last_passed": "2026-10-06T14:56:37Z"
     }
   }
 }
