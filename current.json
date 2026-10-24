@@ -1,0 +1,66 @@
+{
+ "checked_at": "2026-10-24T19:44:03Z",
+ "components": {
+  "account": {
+   "checks": {
+    "health": {
+     "code": 200,
+     "ms": 218,
+     "status": "up"
+    }
+   },
+   "ms": 218,
+   "status": "up"
+  },
+  "console": {
+   "checks": {
+    "health": {
+     "code": 200,
+     "ms": 204,
+     "status": "up"
+    }
+   },
+   "ms": 204,
+   "status": "up"
+  },
+  "coord": {
+   "checks": {
+    "meta": {
+     "code": 200,
+     "ms": 125,
+     "status": "up"
+    }
+   },
+   "ms": 125,
+   "status": "up"
+  },
+  "relay-eu": {
+   "checks": {
+    "healthz": {
+     "code": 200,
+     "ms": 259,
+     "status": "up"
+    }
+   },
+   "ms": 259,
+   "status": "up"
+  },
+  "website": {
+   "checks": {
+    "apex": {
+     "code": 301,
+     "ms": 134,
+     "status": "up"
+    },
+    "www": {
+     "code": 200,
+     "ms": 143,
+     "status": "up"
+    }
+   },
+   "ms": 143,
+   "status": "up"
+  }
+ },
+ "status": "up"
+}
