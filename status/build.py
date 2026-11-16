@@ -123,6 +123,8 @@ def detected(events: list[dict], names: dict[str, dict[str, str]]) -> list[Incid
             start, kind = open_since.pop(cid)
             found.append((cid, start, at, kind))
     for cid, (start, kind) in open_since.items():
+        if cid not in names:
+            continue  # a component that is no longer watched cannot be observed: no ongoing notice
         found.append((cid, start, None, kind))
     incidents = []
     for cid, start, end, kind in found:

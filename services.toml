@@ -74,14 +74,27 @@ expect_status = [200]
 expect_text = "\"api_version\""
 
 [[component]]
-id = "relay-eu"
-name = "Relay Europa"
-name_en = "Relay Europe"
+id = "relay-eu1"
+name = "Relay Europa 1 (Deutschland)"
+name_en = "Relay Europe 1 (Germany)"
 description = "Leitet verschlüsselte Sitzungen weiter, wenn kein direkter Weg möglich ist."
 description_en = "Forwards encrypted sessions when no direct path is possible."
 stage = "test"
 
 [[component.check]]
 id = "healthz"
-url = "https://staging-relay-eu.deskranger.app/healthz"
+url = "https://staging-eu1.relay.deskranger.app/healthz"
+expect_status = [200]
+
+[[component]]
+id = "relay-eu2"
+name = "Relay Europa 2 (Finnland)"
+name_en = "Relay Europe 2 (Finland)"
+description = "Leitet verschlüsselte Sitzungen weiter, wenn kein direkter Weg möglich ist."
+description_en = "Forwards encrypted sessions when no direct path is possible."
+stage = "test"
+
+[[component.check]]
+id = "healthz"
+url = "https://staging-eu2.relay.deskranger.app/healthz"
 expect_status = [200]

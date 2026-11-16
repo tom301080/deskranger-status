@@ -83,6 +83,10 @@ class Build(unittest.TestCase):
         [incident] = build.detected(events, {"relay-eu": {"de": "Relay Europa", "en": "Relay Europe"}})
         self.assertTrue(incident.active)
 
+    def test_outage_of_a_removed_component_is_not_ongoing(self):
+        events = [{"component": "relay-old", "from": "up", "to": "down", "at": "2026-10-02T12:10:00Z"}]
+        self.assertEqual(build.detected(events, {"relay-eu1": {"de": "R", "en": "R"}}), [])
+
     def test_uptime_and_percent(self):
         self.assertIsNone(build.uptime({}))
         self.assertAlmostEqual(build.uptime({"d": {"n": 288, "up": 287, "degraded": 0, "ms": 0}}), 287 / 288)

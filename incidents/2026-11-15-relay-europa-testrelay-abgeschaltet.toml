@@ -1,0 +1,16 @@
+title = "Relay Europa (altes Test-Relay) nicht erreichbar"
+title_en = "Relay Europe (old test relay) unreachable"
+impact = "minor"
+components = ["relay-eu1", "relay-eu2"]
+
+[[update]]
+at = 2026-11-15T11:44:00+01:00
+status = "investigating"
+text = "Das alte Test-Relay in Europa antwortet nicht mehr."
+text_en = "The old test relay in Europe no longer answers."
+
+[[update]]
+at = 2026-11-16T09:00:00+01:00
+status = "resolved"
+text = "Das alte Test-Relay wurde absichtlich abgeschaltet. Die laufenden Relays (Deutschland und Finnland) waren nicht betroffen und werden jetzt einzeln überwacht."
+text_en = "The old test relay was switched off on purpose. The live relays (Germany and Finland) were not affected and are now monitored individually."
