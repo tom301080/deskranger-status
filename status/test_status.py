@@ -68,6 +68,38 @@ class Update(unittest.TestCase):
             self.assertNotIn("2025-01-01", json.loads((data / "daily.json").read_text())["website"])
 
 
+class History(unittest.TestCase):
+    def test_epoch_change_drops_the_old_history_once(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data = Path(tmp)
+            day = {"n": 5, "up": 5, "degraded": 0, "ms": 1}
+            (data / "daily.json").write_text(json.dumps({"console": {"2026-10-02": day}, "website": {"2026-10-02": day}}))
+            (data / "events.json").write_text(json.dumps([{"component": "console", "from": "up", "to": "down", "at": "2026-10-03T00:00:00Z"}]))
+            t0 = datetime(2026, 11, 17, 12, 0, tzinfo=timezone.utc)
+            probe.update(CONFIG, data, t0, round_of("up"))
+            daily = json.loads((data / "daily.json").read_text())
+            self.assertEqual(list(daily["console"]), ["2026-11-17"])
+            self.assertIn("2026-10-02", daily["website"])
+            self.assertEqual(json.loads((data / "events.json").read_text()), [])
+            probe.update(CONFIG, data, t0 + timedelta(minutes=5), round_of("up"))
+            self.assertEqual(json.loads((data / "daily.json").read_text())["console"]["2026-11-17"]["n"], 2)
+
+    def test_bars_only_from_thirty_measured_days(self):
+        def page(n):
+            day = {"n": 288, "up": 288, "degraded": 0, "ms": 1}
+            daily = {"website": {(date(2026, 11, 17) - timedelta(days=i)).isoformat(): day for i in range(n)}}
+            with tempfile.TemporaryDirectory() as tmp:
+                (Path(tmp) / "daily.json").write_text(json.dumps(daily))
+                out = Path(tmp) / "site"
+                build.build(ROOT / "services.toml", Path(tmp), out, today=date(2026, 11, 17))
+                return (out / "index.html").read_text()
+        few, many = page(29), page(30)
+        self.assertNotIn("<i class=", few)
+        self.assertIn("Gemessen seit 20.10.2026", few)
+        self.assertIn('<i class="ok"', many)
+        self.assertNotIn("Gemessen seit", many)
+
+
 class Build(unittest.TestCase):
     def test_detected_outage_has_start_end_and_name(self):
         events = [{"component": "coord", "from": "up", "to": "down", "at": "2026-10-02T12:10:00Z"},
@@ -104,7 +136,7 @@ class Build(unittest.TestCase):
             self.assertIn("No data yet", en)
             for component in CONFIG["component"]:
                 self.assertIn(f'data-component="{component["id"]}"', de)
-            self.assertEqual(de.count("<i class=\"none\""), CONFIG["site"]["days"] * len(CONFIG["component"]))
+            self.assertNotIn("<i class=", de)  # no measurements: no bars, nothing filled green
             self.assertTrue((out / "feed.xml").exists() and (out / "status.json").exists() and (out / "style.css").exists())
 
     def test_site_shows_status_and_uptime(self):
@@ -115,10 +147,10 @@ class Build(unittest.TestCase):
             build.build(ROOT / "services.toml", data, out, today=date(2026, 10, 2))
             de = (out / "index.html").read_text()
             self.assertIn("Alle Dienste laufen", de)
-            self.assertIn("Verfügbarkeit 100 %", de)
-            self.assertIn("Testbetrieb", de)
+            self.assertIn("Gemessen seit 02.10.2026", de)
+            self.assertNotIn("Testbetrieb", de)
+            self.assertNotIn("github.com", de)
             summary = json.loads((out / "status.json").read_text())
-            self.assertEqual(summary["components"]["coord"]["stage"], "test")
             self.assertEqual(summary["components"]["website"]["uptime_90d"], 1.0)
 
     def test_incident_files_parse(self):

@@ -1,7 +1,7 @@
 # What status.deskranger.app watches. Every component has one or more HTTP
-# checks; its status is the worst of them. `stage = "test"` marks services
-# that run as the test environment for the apps' preview builds (operator
-# decision 2026-10-02: public now, production services join at launch).
+# checks; its status is the worst of them. `history_epoch` starts a
+# component's measured history afresh when its value changes (production
+# switch 2026-11-17: the earlier test-environment data is dropped).
 
 [site]
 title = "DeskRanger Status"
@@ -37,11 +37,11 @@ name = "Web-Konsole"
 name_en = "Web console"
 description = "Geräte verwalten und im Browser verbinden."
 description_en = "Manage devices and connect in the browser."
-stage = "test"
+history_epoch = "production-2026-11-17"
 
 [[component.check]]
 id = "health"
-url = "https://staging-app.deskranger.app/health"
+url = "https://app.deskranger.app/health"
 expect_status = [200]
 expect_text = "ok"
 
@@ -51,11 +51,11 @@ name = "Konto und Anmeldung"
 name_en = "Account and sign-in"
 description = "Konto erstellen, anmelden, Apple und Google."
 description_en = "Create an account, sign in, Apple and Google."
-stage = "test"
+history_epoch = "production-2026-11-17"
 
 [[component.check]]
 id = "health"
-url = "https://staging-account.deskranger.app/health"
+url = "https://account.deskranger.app/health"
 expect_status = [200]
 expect_text = "\"ok\":true"
 
@@ -65,11 +65,11 @@ name = "Verbindungsaufbau"
 name_en = "Connection service"
 description = "Geräteliste, Freigaben und der Aufbau jeder Sitzung."
 description_en = "Device list, permissions and setting up every session."
-stage = "test"
+history_epoch = "production-2026-11-17"
 
 [[component.check]]
 id = "meta"
-url = "https://staging-api.deskranger.app/v1/meta"
+url = "https://api.deskranger.app/v1/meta"
 expect_status = [200]
 expect_text = "\"api_version\""
 
@@ -79,11 +79,11 @@ name = "Relay Europa 1 (Deutschland)"
 name_en = "Relay Europe 1 (Germany)"
 description = "Leitet verschlüsselte Sitzungen weiter, wenn kein direkter Weg möglich ist."
 description_en = "Forwards encrypted sessions when no direct path is possible."
-stage = "test"
+history_epoch = "production-2026-11-17"
 
 [[component.check]]
 id = "healthz"
-url = "https://staging-eu1.relay.deskranger.app/healthz"
+url = "https://eu1.relay.deskranger.app/"
 expect_status = [200]
 
 [[component]]
@@ -92,9 +92,9 @@ name = "Relay Europa 2 (Finnland)"
 name_en = "Relay Europe 2 (Finland)"
 description = "Leitet verschlüsselte Sitzungen weiter, wenn kein direkter Weg möglich ist."
 description_en = "Forwards encrypted sessions when no direct path is possible."
-stage = "test"
+history_epoch = "production-2026-11-17"
 
 [[component.check]]
 id = "healthz"
-url = "https://staging-eu2.relay.deskranger.app/healthz"
+url = "https://eu2.relay.deskranger.app/"
 expect_status = [200]

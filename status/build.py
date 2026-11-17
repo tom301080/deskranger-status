@@ -28,6 +28,7 @@ import security
 ROOT = Path(__file__).resolve().parent.parent
 BERLIN = ZoneInfo("Europe/Berlin")
 RANK = {"up": 0, "degraded": 1, "maintenance": 1, "down": 2}
+MIN_BAR_DAYS = 30  # fewer measured days: no bars, only "Measured since" (never fill unmeasured days)
 RAW = "https://raw.githubusercontent.com/{repo}/data/current.json"
 esc = html.escape
 
@@ -36,10 +37,9 @@ TEXT = {
         "lang": "de", "title": "DeskRanger Status", "website": "Website", "help": "Hilfe",
         "all_up": "Alle Dienste laufen", "some_degraded": "Einige Dienste sind langsam",
         "some_down": "Störung bei einem Teil der Dienste", "maintenance": "Wartung läuft",
-        "checked": "Zuletzt geprüft", "no_data": "Noch keine Daten", "test": "Testbetrieb",
-        "test_note": "Web-Konsole, Konto, Verbindungsaufbau und Relay laufen derzeit als Testumgebung für die Vorabversionen der Apps. Mit dem Start der Produktivdienste kommen sie hier dazu.",
+        "checked": "Zuletzt geprüft", "no_data": "Noch keine Daten",
         "up": "Läuft", "degraded": "Langsam", "down": "Gestört", "unknown": "Keine Daten",
-        "uptime": "Verfügbarkeit", "days": "{n} Tage", "since": "Messung seit {d}", "today": "Heute",
+        "uptime": "Verfügbarkeit", "days": "{n} Tage", "since": "Gemessen seit {d}", "today": "Heute",
         "day_tip": "{d}: {p} verfügbar, {n} Prüfungen", "day_none": "{d}: keine Daten",
         "active": "Aktuelle Meldungen", "history": "Vergangene Meldungen", "none": "In den letzten {n} Tagen gab es keine Meldungen.",
         "auto": "automatisch erkannt", "auto_title": "{c} nicht erreichbar", "auto_slow": "{c} langsam",
@@ -47,16 +47,15 @@ TEXT = {
         "impact_maintenance": "Wartung", "investigating": "Wird untersucht", "identified": "Ursache gefunden",
         "monitoring": "Wird beobachtet", "resolved": "Behoben", "scheduled": "Geplant",
         "how_title": "So messen wir",
-        "how": "Etwa alle fünf Minuten ruft ein Prüfauftrag bei GitHub (außerhalb unseres Hostings) jeden Dienst auf. Antwortet ein Dienst nicht oder falsch, versucht er es nach fünf Sekunden noch einmal; erst dann zählt die Prüfung als gestört. Antworten über {ms} ms zählen als langsam. Die Daten und der Code dieser Seite sind öffentlich.",
-        "feed": "Meldungen als Feed", "source": "Daten und Code", "other": "English", "security": "Sicherheit",
+        "how": "Wir prüfen alle Dienste rund um die Uhr alle paar Minuten von außerhalb unseres Hostings. Antwortet ein Dienst nicht oder zu langsam, zählt das als Störung.",
+        "feed": "Meldungen als Feed", "other": "English", "security": "Sicherheit",
         "fmt_day": "%d.%m.%Y", "fmt_time": "%d.%m.%Y, %H:%M Uhr",
     },
     "en": {
         "lang": "en", "title": "DeskRanger Status", "website": "Website", "help": "Help",
         "all_up": "All services are running", "some_degraded": "Some services are slow",
         "some_down": "Some services are disrupted", "maintenance": "Maintenance in progress",
-        "checked": "Last checked", "no_data": "No data yet", "test": "Test operation",
-        "test_note": "Web console, account, connection service and relay currently run as the test environment for the apps' preview builds. The production services will join here at launch.",
+        "checked": "Last checked", "no_data": "No data yet",
         "up": "Running", "degraded": "Slow", "down": "Disrupted", "unknown": "No data",
         "uptime": "Availability", "days": "{n} days", "since": "Measured since {d}", "today": "Today",
         "day_tip": "{d}: {p} available, {n} checks", "day_none": "{d}: no data",
@@ -66,8 +65,8 @@ TEXT = {
         "impact_maintenance": "Maintenance", "investigating": "Investigating", "identified": "Identified",
         "monitoring": "Monitoring", "resolved": "Resolved", "scheduled": "Scheduled",
         "how_title": "How we measure",
-        "how": "About every five minutes a job at GitHub (outside our hosting) calls every service. If a service does not answer or answers wrongly, it tries again after five seconds; only then the check counts as disrupted. Answers slower than {ms} ms count as slow. The data and the code of this page are public.",
-        "feed": "Notices as a feed", "source": "Data and code", "other": "Deutsch", "security": "Security",
+        "how": "We check all services around the clock, every few minutes, from outside our hosting. If a service does not answer or answers too slowly, it counts as a disruption.",
+        "feed": "Notices as a feed", "other": "Deutsch", "security": "Security",
         "fmt_day": "%Y-%m-%d", "fmt_time": "%Y-%m-%d %H:%M %Z",
     },
 }
@@ -185,7 +184,6 @@ def render_page(config: dict, current: dict, daily: dict, incidents: list[Incide
     banner = {"up": t["all_up"], "degraded": t["some_degraded"], "down": t["some_down"],
               "maintenance": t["maintenance"], "unknown": t["no_data"]}[state]
     checked = when(aware(current["checked_at"]), lang) if current.get("checked_at") else "–"
-    first_day = min((d for comp in daily.values() for d in comp), default=None)
 
     rows = []
     for component in config["component"]:
@@ -193,7 +191,9 @@ def render_page(config: dict, current: dict, daily: dict, incidents: list[Incide
         comp_daily = daily.get(cid, {})
         status = current.get("components", {}).get(cid, {}).get("status", "unknown")
         cells = []
-        for day, bucket in day_cells(comp_daily, today, days):
+        measured_days = sorted(d for d, b in comp_daily.items() if b["n"])
+        enough = len(measured_days) >= MIN_BAR_DAYS
+        for day, bucket in (day_cells(comp_daily, today, days) if enough else []):
             label_day = day.strftime(t["fmt_day"])
             if bucket is None:
                 cells.append(f'<i class="none" title="{esc(t["day_none"].format(d=label_day))}"></i>')
@@ -204,16 +204,23 @@ def render_page(config: dict, current: dict, daily: dict, incidents: list[Incide
             cells.append(f'<i class="{level}" title="{esc(tip)}"></i>')
         name = component["name"] if lang == "de" else component.get("name_en", component["name"])
         description = component["description"] if lang == "de" else component.get("description_en", component["description"])
-        stage = f'<span class="stage">{t["test"]}</span>' if component.get("stage") == "test" else ""
+        if enough:
+            measure_html = (
+                f'<div class="bars" role="img" aria-label="{esc(t['uptime'])} {esc(t['days'].format(n=days))}: {percent(uptime(comp_daily), lang)}">{''.join(cells)}</div>\n'
+                f'        <div class="bars-legend"><span>{esc(t['days'].format(n=days))}</span><span>{t['uptime']} {percent(uptime(comp_daily), lang)}</span><span>{t['today']}</span></div>')
+        elif measured_days:
+            since_day = datetime.fromisoformat(measured_days[0]).strftime(t["fmt_day"])
+            measure_html = f'<p class="muted since">{esc(t["since"].format(d=since_day))}</p>'
+        else:
+            measure_html = ""
         rows.append(f"""
       <li class="component" data-component="{esc(cid)}">
         <div class="component-head">
-          <div class="component-name"><h3>{esc(name)}</h3>{stage}</div>
+          <div class="component-name"><h3>{esc(name)}</h3></div>
           <span class="state {status}" data-state>{t.get(status, t["unknown"])}</span>
         </div>
         <p class="component-text">{esc(description)}</p>
-        <div class="bars" role="img" aria-label="{esc(t['uptime'])} {esc(t['days'].format(n=days))}: {percent(uptime(comp_daily), lang)}">{''.join(cells)}</div>
-        <div class="bars-legend"><span>{esc(t['days'].format(n=days))}</span><span>{t['uptime']} {percent(uptime(comp_daily), lang)}</span><span>{t['today']}</span></div>
+        {measure_html}
       </li>""")
 
     names = {c["id"]: (c["name"] if lang == "de" else c.get("name_en", c["name"])) for c in config["component"]}
@@ -241,9 +248,8 @@ def render_page(config: dict, current: dict, daily: dict, incidents: list[Incide
     past_html = "".join(incident_html(i) for i in sorted(past, key=lambda i: i.started, reverse=True)) \
         or f'<p class="muted">{t["none"].format(n=days)}</p>'
     other_href = "en/" if lang == "de" else "../"
-    since = f'<p class="muted since">{t["since"].format(d=datetime.fromisoformat(first_day).strftime(t["fmt_day"]))}</p>' if first_day else ""
     how = t["how"].format(ms=config["site"]["degraded_ms"])
-    repo = config["site"]["repo"]
+    repo = config["site"]["repo"]  # only for the data URL of the live refresh
     labels = {k: t[k] for k in ("up", "degraded", "down", "unknown", "all_up", "some_degraded", "some_down", "maintenance", "no_data")}
     incident_floor = overall({"components": {}}, active) if active else "up"
 
@@ -274,13 +280,11 @@ def render_page(config: dict, current: dict, daily: dict, incidents: list[Incide
     <div><h1 data-banner-text>{banner}</h1><p>{t['checked']}: <time data-checked>{checked}</time></p></div>
   </section>
   {f'<section class="incidents active"><h2>{t["active"]}</h2>{active_html}</section>' if active_html else ''}
-  <p class="note">{t['test_note']}</p>
   <ul class="components">{''.join(rows)}
   </ul>
-  {since}
   <section class="incidents"><h2>{t['history']}</h2>{past_html}</section>
   <section class="how"><h2>{t['how_title']}</h2><p>{how}</p>
-    <p class="links"><a href="{prefix}feed.xml">{t['feed']}</a><a href="https://github.com/{repo}">{t['source']}</a><a href="{prefix}status.json">status.json</a></p>
+    <p class="links"><a href="{prefix}feed.xml">{t['feed']}</a><a href="{prefix}status.json">status.json</a></p>
   </section>
 </main>
 </body>
@@ -345,7 +349,7 @@ def build(services: Path, data_dir: Path, out: Path, today: date | None = None, 
         "status": overall(current, incidents) if current else "unknown",
         "components": {
             c["id"]: {"status": current.get("components", {}).get(c["id"], {}).get("status", "unknown"),
-                      "uptime_90d": uptime(daily.get(c["id"], {})), "stage": c.get("stage", "production")}
+                      "uptime_90d": uptime(daily.get(c["id"], {})), "measured_days": len(daily.get(c["id"], {}))}
             for c in config["component"]
         },
         "active_incidents": [i.key for i in incidents if i.active],

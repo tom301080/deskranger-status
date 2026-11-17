@@ -30,8 +30,9 @@ with `status = "resolved"`. Outages the checks see are listed automatically
 ## Add a service
 
 Add a `[[component]]` with one or more `[[component.check]]` entries to
-`services.toml` (`expect_status`, optional `expect_text`). `stage = "test"`
-marks services of the test environment.
+`services.toml` (`expect_status`, optional `expect_text`). Changing a
+component's `history_epoch` starts its measured history afresh. A component
+with fewer than 30 measured days shows no bars, only "Measured since".
 
 ## Run locally
 

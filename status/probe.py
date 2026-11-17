@@ -95,6 +95,16 @@ def update(config: dict, data_dir: Path, now: datetime, results: dict[str, dict[
     daily = load(data_dir / "daily.json", {})
     events = load(data_dir / "events.json", [])
     meta = load(data_dir / "meta.json", {})
+    # `history_epoch` in services.toml: when it changes, that component's
+    # measured history (days, events, last state) starts afresh.
+    epochs = meta.setdefault("epochs", {})
+    for component in config["component"]:
+        epoch, cid = component.get("history_epoch"), component["id"]
+        if epoch and epochs.get(cid) != epoch:
+            epochs[cid] = epoch
+            daily.pop(cid, None)
+            previous.pop(cid, None)
+            events = [e for e in events if e["component"] != cid]
     day = now.strftime("%Y-%m-%d")
     stamp = now.isoformat(timespec="seconds").replace("+00:00", "Z")
     keep_from = (now - timedelta(days=config["site"]["days"] + 5)).strftime("%Y-%m-%d")
