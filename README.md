@@ -31,8 +31,9 @@ with `status = "resolved"`. Outages the checks see are listed automatically
 
 Add a `[[component]]` with one or more `[[component.check]]` entries to
 `services.toml` (`expect_status`, optional `expect_text`). Changing a
-component's `history_epoch` starts its measured history afresh. A component
-with fewer than 30 measured days shows no bars, only "Measured since".
+component's `history_epoch` starts its measured history afresh. The bars of
+a component with fewer than 90 measured days cover only its measured days
+("since <date>"); unmeasured days are never drawn.
 
 ## Run locally
 

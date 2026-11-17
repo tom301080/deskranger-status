@@ -84,7 +84,7 @@ class History(unittest.TestCase):
             probe.update(CONFIG, data, t0 + timedelta(minutes=5), round_of("up"))
             self.assertEqual(json.loads((data / "daily.json").read_text())["console"]["2026-11-17"]["n"], 2)
 
-    def test_bars_only_from_thirty_measured_days(self):
+    def test_bars_cover_only_measured_days(self):
         def page(n):
             day = {"n": 288, "up": 288, "degraded": 0, "ms": 1}
             daily = {"website": {(date(2026, 11, 17) - timedelta(days=i)).isoformat(): day for i in range(n)}}
@@ -93,11 +93,13 @@ class History(unittest.TestCase):
                 out = Path(tmp) / "site"
                 build.build(ROOT / "services.toml", Path(tmp), out, today=date(2026, 11, 17))
                 return (out / "index.html").read_text()
-        few, many = page(29), page(30)
-        self.assertNotIn("<i class=", few)
-        self.assertIn("Gemessen seit 20.10.2026", few)
-        self.assertIn('<i class="ok"', many)
-        self.assertNotIn("Gemessen seit", many)
+        few, full = page(10), page(90)
+        self.assertEqual(few.count('<i class="ok"'), 10)
+        self.assertNotIn('<i class="none"', few)  # no grey padding, no invented days
+        self.assertIn("seit 08.11.2026", few)
+        self.assertIn("Verfügbarkeit seit 08.11.2026 100 %", few)
+        self.assertEqual(full.count('<i class="ok"'), 90)
+        self.assertIn("90 Tage", full)
 
 
 class Build(unittest.TestCase):
@@ -147,7 +149,7 @@ class Build(unittest.TestCase):
             build.build(ROOT / "services.toml", data, out, today=date(2026, 10, 2))
             de = (out / "index.html").read_text()
             self.assertIn("Alle Dienste laufen", de)
-            self.assertIn("Gemessen seit 02.10.2026", de)
+            self.assertIn("Verfügbarkeit seit 02.10.2026 100 %", de)
             self.assertNotIn("Testbetrieb", de)
             self.assertNotIn("github.com", de)
             summary = json.loads((out / "status.json").read_text())

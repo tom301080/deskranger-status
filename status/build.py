@@ -28,7 +28,6 @@ import security
 ROOT = Path(__file__).resolve().parent.parent
 BERLIN = ZoneInfo("Europe/Berlin")
 RANK = {"up": 0, "degraded": 1, "maintenance": 1, "down": 2}
-MIN_BAR_DAYS = 30  # fewer measured days: no bars, only "Measured since" (never fill unmeasured days)
 RAW = "https://raw.githubusercontent.com/{repo}/data/current.json"
 esc = html.escape
 
@@ -39,7 +38,7 @@ TEXT = {
         "some_down": "Störung bei einem Teil der Dienste", "maintenance": "Wartung läuft",
         "checked": "Zuletzt geprüft", "no_data": "Noch keine Daten",
         "up": "Läuft", "degraded": "Langsam", "down": "Gestört", "unknown": "Keine Daten",
-        "uptime": "Verfügbarkeit", "days": "{n} Tage", "since": "Gemessen seit {d}", "today": "Heute",
+        "uptime": "Verfügbarkeit", "days": "{n} Tage", "since_short": "seit {d}", "uptime_since": "Verfügbarkeit seit {d}", "today": "Heute",
         "day_tip": "{d}: {p} verfügbar, {n} Prüfungen", "day_none": "{d}: keine Daten",
         "active": "Aktuelle Meldungen", "history": "Vergangene Meldungen", "none": "In den letzten {n} Tagen gab es keine Meldungen.",
         "auto": "automatisch erkannt", "auto_title": "{c} nicht erreichbar", "auto_slow": "{c} langsam",
@@ -57,7 +56,7 @@ TEXT = {
         "some_down": "Some services are disrupted", "maintenance": "Maintenance in progress",
         "checked": "Last checked", "no_data": "No data yet",
         "up": "Running", "degraded": "Slow", "down": "Disrupted", "unknown": "No data",
-        "uptime": "Availability", "days": "{n} days", "since": "Measured since {d}", "today": "Today",
+        "uptime": "Availability", "days": "{n} days", "since_short": "since {d}", "uptime_since": "Availability since {d}", "today": "Today",
         "day_tip": "{d}: {p} available, {n} checks", "day_none": "{d}: no data",
         "active": "Current notices", "history": "Past notices", "none": "No notices in the last {n} days.",
         "auto": "detected automatically", "auto_title": "{c} unreachable", "auto_slow": "{c} slow",
@@ -192,8 +191,12 @@ def render_page(config: dict, current: dict, daily: dict, incidents: list[Incide
         status = current.get("components", {}).get(cid, {}).get("status", "unknown")
         cells = []
         measured_days = sorted(d for d, b in comp_daily.items() if b["n"])
-        enough = len(measured_days) >= MIN_BAR_DAYS
-        for day, bucket in (day_cells(comp_daily, today, days) if enough else []):
+        # The row always fills the width, but only with measured days: from the first measured day
+        # to today (never padded with days nobody measured, never green without a measurement).
+        first = date.fromisoformat(measured_days[0]) if measured_days else None
+        shown = min(days, (today - first).days + 1) if first else 0
+        partial = bool(first) and shown < days
+        for day, bucket in (day_cells(comp_daily, today, shown) if shown else []):
             label_day = day.strftime(t["fmt_day"])
             if bucket is None:
                 cells.append(f'<i class="none" title="{esc(t["day_none"].format(d=label_day))}"></i>')
@@ -204,13 +207,14 @@ def render_page(config: dict, current: dict, daily: dict, incidents: list[Incide
             cells.append(f'<i class="{level}" title="{esc(tip)}"></i>')
         name = component["name"] if lang == "de" else component.get("name_en", component["name"])
         description = component["description"] if lang == "de" else component.get("description_en", component["description"])
-        if enough:
+        if shown:
+            since_day = first.strftime(t["fmt_day"])
+            left = t["since_short"].format(d=since_day) if partial else t["days"].format(n=days)
+            label = t["uptime_since"].format(d=since_day) if partial else t["uptime"]
+            pct = percent(uptime(comp_daily), lang)
             measure_html = (
-                f'<div class="bars" role="img" aria-label="{esc(t['uptime'])} {esc(t['days'].format(n=days))}: {percent(uptime(comp_daily), lang)}">{''.join(cells)}</div>\n'
-                f'        <div class="bars-legend"><span>{esc(t['days'].format(n=days))}</span><span>{t['uptime']} {percent(uptime(comp_daily), lang)}</span><span>{t['today']}</span></div>')
-        elif measured_days:
-            since_day = datetime.fromisoformat(measured_days[0]).strftime(t["fmt_day"])
-            measure_html = f'<p class="muted since">{esc(t["since"].format(d=since_day))}</p>'
+                f'<div class="bars" role="img" aria-label="{esc(label)}: {pct}">{''.join(cells)}</div>\n'
+                f'        <div class="bars-legend"><span>{esc(left)}</span><span>{esc(label)} {pct}</span><span>{t['today']}</span></div>')
         else:
             measure_html = ""
         rows.append(f"""
