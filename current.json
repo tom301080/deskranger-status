@@ -1,0 +1,77 @@
+{
+ "checked_at": "2026-11-21T16:26:10Z",
+ "components": {
+  "account": {
+   "checks": {
+    "health": {
+     "code": 200,
+     "ms": 176,
+     "status": "up"
+    }
+   },
+   "ms": 176,
+   "status": "up"
+  },
+  "console": {
+   "checks": {
+    "health": {
+     "code": 200,
+     "ms": 158,
+     "status": "up"
+    }
+   },
+   "ms": 158,
+   "status": "up"
+  },
+  "coord": {
+   "checks": {
+    "meta": {
+     "code": 200,
+     "ms": 157,
+     "status": "up"
+    }
+   },
+   "ms": 157,
+   "status": "up"
+  },
+  "relay-eu1": {
+   "checks": {
+    "healthz": {
+     "code": 200,
+     "ms": 336,
+     "status": "up"
+    }
+   },
+   "ms": 336,
+   "status": "up"
+  },
+  "relay-eu2": {
+   "checks": {
+    "healthz": {
+     "code": 200,
+     "ms": 402,
+     "status": "up"
+    }
+   },
+   "ms": 402,
+   "status": "up"
+  },
+  "website": {
+   "checks": {
+    "apex": {
+     "code": 301,
+     "ms": 175,
+     "status": "up"
+    },
+    "www": {
+     "code": 200,
+     "ms": 136,
+     "status": "up"
+    }
+   },
+   "ms": 175,
+   "status": "up"
+  }
+ },
+ "status": "up"
+}

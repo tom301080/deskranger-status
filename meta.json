@@ -1,0 +1,10 @@
+{
+ "deployed_at": "2026-11-21T16:26:10Z",
+ "epochs": {
+  "account": "production-2026-11-17",
+  "console": "production-2026-11-17",
+  "coord": "production-2026-11-17",
+  "relay-eu1": "production-2026-11-17",
+  "relay-eu2": "production-2026-11-17"
+ }
+}
